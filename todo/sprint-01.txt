@@ -1,0 +1,24 @@
+TL : ETU003301
+DEV: ETU03340, ETU003309
+
+features 1: (ETU003340)
+CREATE DTO
+	- Création des entités:
+		* Hotel
+			Integer id
+			String nom
+
+		* Reservation
+			Integer id
+			String idClient
+			Integer nombrePassager
+			LocalDateTime dateArrive
+			Hotel hotel
+
+features 2: (ETU003309)
+CREATE RESERVATION LIST
+	- Création de la fonction List<Reservation> getReservations(LocalDate date) dans ApiService
+		➜ si date == null → /api/reservations
+		➜ sinon → /api/reservations?date=yyyy-MM-dd
+	- Exposition endpoint GET /reservations dans ReservationController 
+	- Création de la page reservation/list.jsp avec filtre date
