@@ -18,7 +18,5 @@ CREATE DTO
 features 2: (ETU003309)
 CREATE RESERVATION LIST
 	- Création de la fonction List<Reservation> getReservations(LocalDate date) dans ApiService
-		➜ si date == null → /api/reservations
-		➜ sinon → /api/reservations?date=yyyy-MM-dd
 	- Exposition endpoint GET /reservations dans ReservationController 
 	- Création de la page reservation/list.jsp avec filtre date
