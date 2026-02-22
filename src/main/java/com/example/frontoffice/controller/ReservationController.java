@@ -28,7 +28,7 @@ public class ReservationController {
         List<Reservation> reservations = apiService.getReservations(date);
         
         model.addAttribute("reservations", reservations);
-        model.addAttribute("date", date); // To populate the date picker with selected value
+        model.addAttribute("date", date); 
         
         return "reservation/list";
     }
