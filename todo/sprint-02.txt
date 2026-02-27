@@ -1,0 +1,10 @@
+TL : ETU003340
+DEV : ETU003301, ETU003309
+
+features 1 : (ETU003301)
+SERVICE API CLIENT
+    - Création du fichier api.properties
+        api.base.url=http://localhost:8080/backoffice
+        api.token=test123
+    - Création de la classe ApiConfig
+    - Modification dans ApiService
