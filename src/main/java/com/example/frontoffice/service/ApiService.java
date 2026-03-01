@@ -15,8 +15,8 @@ public class ApiService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${api.url.reservations}")
-    private String reservationsUrl;
+    @Value("${api.base.url}")
+    private String baseUrl;
 
     public ApiService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -24,10 +24,17 @@ public class ApiService {
 
     public List<Reservation> getReservations(LocalDate date) {
         ReservationResponse response = restTemplate.getForObject(
-                reservationsUrl + "?date={date}",
+                baseUrl + "/reservations?date={date}",
                 ReservationResponse.class,
                 date);
 
         return response != null ? response.getData() : Collections.emptyList();
+    }
+
+    public void sendTokenToBackOffice(String token) {
+        String url = baseUrl + "/authentification?token={token}";
+
+        String response = restTemplate.postForObject(url, null, String.class, token);
+        System.out.println("Réponse API : " + response);
     }
 }
