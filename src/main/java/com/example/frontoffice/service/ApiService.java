@@ -1,8 +1,11 @@
 package com.example.frontoffice.service;
 
-import com.example.frontoffice.dto.ReservationResponse;
+import com.example.frontoffice.dto.ListResponse;
 import com.example.frontoffice.model.Reservation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,12 +26,32 @@ public class ApiService {
     }
 
     public List<Reservation> getReservations(LocalDate date) {
-        ReservationResponse response = restTemplate.getForObject(
-                baseUrl + "/reservations?date={date}",
-                ReservationResponse.class,
-                date);
 
-        return response != null ? response.getData() : Collections.emptyList();
+        try {
+
+            ResponseEntity<ListResponse<Reservation>> response = restTemplate.exchange(
+                    baseUrl + "/reservations?date={date}",
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<ListResponse<Reservation>>() {
+                    },
+                    date);
+
+            ListResponse<Reservation> body = response.getBody();
+
+            if (body == null)
+                return Collections.emptyList();
+
+            if ("error".equals(body.getStatus()))
+                throw new IllegalStateException(body.getError());
+
+            return body.getData() != null
+                    ? body.getData().getItems()
+                    : Collections.emptyList();
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Token invalide ou expiré");
+        }
     }
 
     public void sendTokenToBackOffice(String token) {
