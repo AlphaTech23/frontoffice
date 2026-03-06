@@ -24,12 +24,13 @@ public class ReservationController {
     public String listReservations(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             Model model) {
-        
-        List<Reservation> reservations = apiService.getReservations(date);
-        
-        model.addAttribute("reservations", reservations);
+        try {
+            List<Reservation> reservations = apiService.getReservations(date);
+            model.addAttribute("reservations", reservations);
+        } catch(Exception e) {
+            model.addAttribute("message", e.getMessage());
+        }
         model.addAttribute("date", date); 
-        
         return "reservation/list";
     }
 }
