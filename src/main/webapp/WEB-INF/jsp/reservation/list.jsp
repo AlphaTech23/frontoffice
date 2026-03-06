@@ -4,478 +4,274 @@
 <%@ page import="java.time.format.DateTimeFormatter"%>
 <%@ page import="java.time.LocalDate"%>
 <%@ page import="com.example.frontoffice.model.Reservation"%>
+<%@ page import="java.util.Map"%>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.stream.Collectors"%>
 
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Réservations</title>
-    <!-- Font Awesome pour les icônes -->
+    <title>Réservations | Tableau de bord</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Animation CSS -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        /* En-tête */
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            font-weight: 700;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        /* Filtre */
-        .filter-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .filter-form {
-            display: flex;
-            align-items: flex-end;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .form-group {
-            flex: 1;
-            min-width: 250px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102,126,234,0.3);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        /* Statistiques */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 25px;
-            background: white;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
+        
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
+            transition: transform 0.2s ease;
         }
-
-        .stat-icon {
-            font-size: 2.5em;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 2em;
-            font-weight: 700;
-            color: #495057;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Tableau */
-        .table-container {
-            padding: 0 25px 25px 25px;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        thead tr {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        th {
-            padding: 15px;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.9em;
-            letter-spacing: 0.5px;
-            text-align: left;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-            color: #495057;
-        }
-
-        tbody tr {
-            transition: all 0.3s ease;
-        }
-
-        tbody tr:hover {
-            background-color: #f8f9fa;
-            transform: scale(1.01);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .badge-hotel {
-            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
-            color: #667eea;
-        }
-
-        .badge-passagers {
-            background: #28a74520;
-            color: #28a745;
-        }
-
-        /* Message aucune donnée */
-        .no-data {
-            text-align: center;
-            padding: 50px 25px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            margin: 25px;
-        }
-
-        .no-data i {
-            font-size: 4em;
-            color: #dee2e6;
-            margin-bottom: 15px;
-        }
-
-        .no-data p {
-            color: #6c757d;
-            font-size: 1.2em;
-            margin-bottom: 10px;
-        }
-
-        .no-data .date-highlight {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 25px;
-            display: inline-block;
-            font-weight: 600;
-        }
-
-        /* Footer */
-        .footer {
-            background: #f8f9fa;
-            padding: 15px 25px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 0.9em;
-            border-top: 1px solid #e9ecef;
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .filter-form {
-                flex-direction: column;
-            }
-            
-            .form-group {
-                width: 100%;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
+        
+        .table-row-hover:hover {
+            background: linear-gradient(to right, #f9fafb, #ffffff);
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- En-tête -->
-        <div class="header">
-            <h1><i class="fas fa-calendar-check" style="margin-right: 10px;"></i>Gestion des Réservations</h1>
-            <p>Consultez et filtrez l'ensemble des réservations</p>
-        </div>
+<body class="bg-gray-50">
+    <%
+        List<Reservation> reservations = (List<Reservation>) request.getAttribute("reservations");
+        String message = (String) request.getAttribute("message");
+        LocalDate filterDate = (LocalDate) request.getAttribute("date");
+        
+        // Calcul des statistiques
+        int totalReservations = reservations != null ? reservations.size() : 0;
+        int totalPassagers = reservations != null ? 
+            reservations.stream().mapToInt(Reservation::getNombrePassager).sum() : 0;
+        long hotelsUniques = reservations != null ? 
+            reservations.stream()
+                .map(r -> r.getHotel() != null ? r.getHotel().getNom() : "Non spécifié")
+                .distinct()
+                .count() : 0;
+        
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    %>
 
-        <!-- Section filtre -->
-        <div class="filter-section">
-            <form action="reservations" method="get" class="filter-form">
-                <div class="form-group">
-                    <label for="date">
-                        <i class="fas fa-calendar-alt" style="margin-right: 5px;"></i>
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded-lg">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                    </div>
+                    <h1 class="text-xl font-semibold text-gray-800">Gestion des Réservations</h1>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <i class="far fa-clock mr-1"></i>
+                    <%= LocalDateTime.now().format(dateTimeFormatter) %>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Filtre -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate-fade-in">
+            <form action="reservations" method="get" class="flex flex-col sm:flex-row items-end gap-4">
+                <div class="flex-1 w-full">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
                         Filtrer par date
                     </label>
-                    <input type="date" id="date" name="date" 
-                           value="<%= request.getAttribute("date") != null ? request.getAttribute("date") : "" %>"
-                           placeholder="Sélectionner une date">
+                    <div class="relative">
+                        <input type="date" 
+                               name="date" 
+                               value="<%= filterDate != null ? filterDate : "" %>"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i>
-                    Rechercher
-                </button>
-                <a href="reservations" class="btn btn-secondary">
-                    <i class="fas fa-times"></i>
-                    Effacer le filtre
-                </a>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button type="submit" 
+                            class="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium">
+                        <i class="fas fa-search mr-2"></i>
+                        Rechercher
+                    </button>
+                    <a href="reservations" 
+                       class="flex-1 sm:flex-none bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-all font-medium text-center">
+                        <i class="fas fa-times mr-2"></i>
+                        Réinitialiser
+                    </a>
+                </div>
             </form>
         </div>
 
-<%
-    List<Reservation> reservations = (List<Reservation>) request.getAttribute("reservations");
-    
-    // Calcul des statistiques
-    int totalReservations = reservations != null ? reservations.size() : 0;
-    int totalPassagers = 0;
-    String hotelPlusReserve = "";
-    int maxReservations = 0;
-    
-    if (reservations != null) {
-        java.util.Map<String, Integer> hotelCount = new java.util.HashMap<>();
-        for (Reservation r : reservations) {
-            totalPassagers += r.getNombrePassager();
-            String hotelNom = r.getHotel() != null ? r.getHotel().getNom() : "Non spécifié";
-            hotelCount.put(hotelNom, hotelCount.getOrDefault(hotelNom, 0) + 1);
-        }
-        
-        for (java.util.Map.Entry<String, Integer> entry : hotelCount.entrySet()) {
-            if (entry.getValue() > maxReservations) {
-                maxReservations = entry.getValue();
-                hotelPlusReserve = entry.getKey();
-            }
-        }
-    }
-%>
+        <!-- Message d'erreur -->
+        <% if(message != null && !message.isEmpty()) { %>
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-8 rounded-lg animate-fade-in">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700"><%= message %></p>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
 
         <!-- Statistiques -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-ticket-alt"></i>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="stat-card bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total réservations</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2"><%= totalReservations %></p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i class="fas fa-ticket-alt text-blue-600 text-2xl"></i>
+                    </div>
                 </div>
-                <div class="stat-value"><%= totalReservations %></div>
-                <div class="stat-label">Réservations</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
+            
+            <div class="stat-card bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total passagers</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2"><%= totalPassagers %></p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i class="fas fa-users text-green-600 text-2xl"></i>
+                    </div>
                 </div>
-                <div class="stat-value"><%= totalPassagers %></div>
-                <div class="stat-label">Passagers</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-hotel"></i>
+            
+            <div class="stat-card bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Hôtels concernés</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2"><%= hotelsUniques %></p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i class="fas fa-hotel text-purple-600 text-2xl"></i>
+                    </div>
                 </div>
-                <div class="stat-value"><%= hotelPlusReserve.isEmpty() ? "-" : hotelPlusReserve %></div>
-                <div class="stat-label">Hôtel le + réservé</div>
             </div>
         </div>
 
-<%
-    if (reservations != null && !reservations.isEmpty()) {
-        // Formateur pour les dates
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-%>
         <!-- Tableau des réservations -->
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-hashtag" style="margin-right: 5px;"></i>ID</th>
-                        <th><i class="fas fa-user" style="margin-right: 5px;"></i>Client</th>
-                        <th><i class="fas fa-users" style="margin-right: 5px;"></i>Passagers</th>
-                        <th><i class="fas fa-calendar-alt" style="margin-right: 5px;"></i>Date d'Arrivée</th>
-                        <th><i class="fas fa-hotel" style="margin-right: 5px;"></i>Hôtel</th>
-                    </tr>
-                </thead>
-                <tbody>
-<%
-        for (Reservation reservation : reservations) {
-            // Formatage de la date si disponible
-            LocalDateTime dateArrivee = reservation.getDateArrive();
-            String dateArriveeFormatted = "";
-            if (dateArrivee != null) {
-                dateArriveeFormatted = dateArrivee.format(formatter);
-            }
-%>
-                    <tr>
-                        <td><strong>#<%= reservation.getId() %></strong></td>
-                        <td>
-                            <i class="fas fa-user-circle" style="color: #667eea; margin-right: 5px;"></i>
-                            <%= reservation.getIdClient() %>
-                        </td>
-                        <td>
-                            <span class="badge badge-passagers">
-                                <i class="fas fa-user"></i> <%= reservation.getNombrePassager() %>
-                                <%= reservation.getNombrePassager() > 1 ? "passagers" : "passager" %>
-                            </span>
-                        </td>
-                        <td>
-                            <i class="far fa-calendar" style="color: #6c757d; margin-right: 5px;"></i>
-                            <%= dateArriveeFormatted %>
-                        </td>
-                        <td>
-                            <span class="badge badge-hotel">
-                                <i class="fas fa-building"></i>
-                                <%= reservation.getHotel() != null ? reservation.getHotel().getNom() : "Non spécifié" %>
-                            </span>
-                        </td>
-                    </tr>
-<%
-        }
-%>
-                </tbody>
-            </table>
-        </div>
-<%
-    } else {
-%>
-        <!-- Message aucune donnée -->
-        <div class="no-data">
-            <i class="fas fa-folder-open"></i>
-            <p>Aucune réservation trouvée</p>
-<%
-        if (request.getAttribute("date") != null) {
-            String dateFiltre = (String) request.getAttribute("date");
-            try {
-                LocalDate date = LocalDate.parse(dateFiltre);
-                DateTimeFormatter formatterDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                dateFiltre = date.format(formatterDate);
-            } catch (Exception e) {
-                // Garder la date originale si le formatage échoue
-            }
-%>
-            <div class="date-highlight">
-                <i class="fas fa-calendar-day"></i>
-                pour le <%= dateFiltre %>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-fade-in" style="animation-delay: 0.4s">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        <i class="fas fa-list mr-2 text-blue-500"></i>
+                        Liste des réservations
+                    </h2>
+                    <% if(filterDate != null) { %>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                            <i class="far fa-calendar mr-1"></i>
+                            <%= filterDate.format(dateFormatter) %>
+                        </span>
+                    <% } %>
+                </div>
             </div>
-<%
-        }
-%>
-        </div>
-<%
-    }
-%>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p>
-                <i class="far fa-clock"></i>
-                Dernière mise à jour : <%= java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) %>
-            </p>
+            <% if(reservations != null && !reservations.isEmpty()) { %>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passagers</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date d'arrivée</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hôtel</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <% for(Reservation r : reservations) { 
+                                String dateArriveeFormatted = r.getDateArrive() != null ? 
+                                    r.getDateArrive().format(dateFormatter) : "Non spécifiée";
+                                String hotelName = r.getHotel() != null ? 
+                                    r.getHotel().getNom() : "Non spécifié";
+                            %>
+                                <tr class="table-row-hover transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm font-medium text-gray-900">#<%= r.getId() %></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                                                <span class="text-white text-sm font-medium">
+                                                    <%= r.getIdClient() != null ? r.getIdClient().substring(0, 1).toUpperCase() : "?" %>
+                                                </span>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm font-medium text-gray-900">Client #<%= r.getIdClient() %></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium <%= r.getNombrePassager() > 2 ? "bg-orange-100 text-orange-800" : "bg-green-100 text-green-800" %> rounded-full">
+                                            <i class="fas fa-user mr-1"></i>
+                                            <%= r.getNombrePassager() %> <%= r.getNombrePassager() > 1 ? "personnes" : "personne" %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center text-sm text-gray-900">
+                                            <i class="far fa-calendar-alt text-gray-400 mr-2"></i>
+                                            <%= dateArriveeFormatted %>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-building text-gray-400 mr-2"></i>
+                                            <span class="text-sm text-gray-900"><%= hotelName %></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <!-- État vide -->
+                <div class="text-center py-16 px-6">
+                    <div class="mb-4">
+                        <i class="fas fa-folder-open text-gray-300 text-6xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune réservation trouvée</h3>
+                    <p class="text-gray-500 mb-6">
+                        <% if(filterDate != null) { %>
+                            Aucune réservation pour le <%= filterDate.format(dateFormatter) %>
+                        <% } else { %>
+                            Aucune réservation n'est disponible pour le moment
+                        <% } %>
+                    </p>
+                    <% if(filterDate != null) { %>
+                        <a href="reservations" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            <i class="fas fa-times mr-2"></i>
+                            Effacer le filtre
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
         </div>
-    </div>
+        <% } %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 mt-8">
+        <p class="text-center text-sm text-gray-500">
+            <i class="far fa-copyright mr-1"></i>
+            <%= LocalDate.now().getYear() %> Gestion des Réservations. Tous droits réservés.
+        </p>
+    </footer>
 </body>
 </html>
